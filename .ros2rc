@@ -1,4 +1,5 @@
-source /opt/ros/iron/setup.$CURRENT_SHELL
+CURRENT_SHELL=$(basename $SHELL)
+source /opt/ros/humble/setup.$CURRENT_SHELL
 
 
 #| FUNCTIONS |#
@@ -123,7 +124,6 @@ alias ros2help="ros2help"
 
 
 #| ENVIRONMENT VARIABLES |#
-CURRENT_SHELL=$(basename $SHELL)
 export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
 export CYCLONEDDS_URI=~/ros2_ws/dds_config/cyclone_dds_config.xml
 export FASTRTPS_DEFAULT_PROFILES_FILE=~/ros2_ws/dds_config/fast_rtps_dds_config.xml
