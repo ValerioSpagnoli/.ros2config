@@ -1,7 +1,4 @@
-CURRENT_SHELL=$(basename $SHELL)
-alias nanoRos2config="nano ~/.ros2config"
-alias geditRos2config="gedit ~/.ros2config"
-alias sourceRos2config="source ~/.ros2config"
+source /opt/ros/iron/setup.$CURRENT_SHELL
 
 
 #| FUNCTIONS |#
@@ -25,7 +22,7 @@ function ros2build() {
 }
 
 function ros2sourceGlobal() {
-    source /opt/ros/iron/setup.$CURRENT_SHELL
+    source /opt/ros/$ROS_DISTRO/setup.$CURRENT_SHELL
 }
 
 function ros2sourceLocal() {
@@ -94,9 +91,9 @@ function ros2dds() {
 
 function ros2help() {
     echo "Available commands:"
-    echo "  nanoRos2config:   to edit the configuration file with nano"
-    echo "  geditRos2config:  to edit the configuration file with gedit"
-    echo "  sourceRos2config: to source ~/.ros2config"
+    echo "  ros2configNano:   to edit the configuration file with nano"
+    echo "  ros2configGedit:  to edit the configuration file with gedit"
+    echo "  ros2configSource: to source ~/.ros2config"
     echo "  ros2build:        to build the workspace"
     echo "  ros2source:       to source /opt/ros/$ROS_DISTRO/setup.$CURRENT_SHELL and ~/ros2_ws/install/local_setup.$CURRENT_SHELL"
     echo "  ros2sourceGlobal: to source /opt/ros/$ROS_DISTRO/setup.$CURRENT_SHELL"
@@ -108,7 +105,11 @@ function ros2help() {
 }
 
 
-#| CONFIGURATION |#
+#| ALIASES |#
+alias ros2configNano="nano ~/.ros2config"
+alias ros2configGedit="gedit ~/.ros2config"
+alias ros2configSource="source ~/.ros2config"
+
 alias foxgloveBridge="ros2 launch foxglove_bridge foxglove_bridge_launch.xml send_buffer_limit:=300000000"
 alias ros2build="ros2build"
 alias ros2source="ros2source"
@@ -119,7 +120,9 @@ alias ros2domain="ros2domain"
 alias ros2dds="ros2dds"
 alias ros2help="ros2help"
 
-source /opt/ros/iron/setup.$CURRENT_SHELL
+
+#| ENVIRONMENT VARIABLES |#
+CURRENT_SHELL=$(basename $SHELL)
 export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
 export CYCLONEDDS_URI=~/ros2_ws/dds_config/cyclone_dds_config.xml
 export FASTRTPS_DEFAULT_PROFILES_FILE=~/ros2_ws/dds_config/fast_rtps_dds_config.xml
