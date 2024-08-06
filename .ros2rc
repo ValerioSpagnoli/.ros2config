@@ -57,7 +57,7 @@ function ros2clean() {
 function ros2domain() {
     case $1 in
         -p|--perm) 
-            sed -i "s/ROS_DOMAIN_ID=$ROS_DOMAIN_ID/ROS_DOMAIN_ID=$2/g" ~/.ros2config && ros2configSource
+            sed -i "s/ROS_DOMAIN_ID=$ROS_DOMAIN_ID/ROS_DOMAIN_ID=$2/g" ~/.ros2rc && ros2rcSource
             echo "ROS_DOMAIN_ID permanently set to $2";;
         -t|--temp) 
             export ROS_DOMAIN_ID=$2
@@ -76,10 +76,10 @@ function ros2dds() {
     CYCLONE_DDS="rmw_cyclonedds_cpp"
     case $1 in
         -c|--cyclone) 
-            sed -i "s/RMW_IMPLEMENTATION=$RMW_IMPLEMENTATION/RMW_IMPLEMENTATION=$CYCLONE_DDS/g" ~/.ros2config && ros2configSource
+            sed -i "s/RMW_IMPLEMENTATION=$RMW_IMPLEMENTATION/RMW_IMPLEMENTATION=$CYCLONE_DDS/g" ~/.ros2rc && ros2rcSource
             echo "DDS implementation set to $CYCLONE_DDS";;
         -f|--fastrtps) 
-            sed -i "s/RMW_IMPLEMENTATION=$RMW_IMPLEMENTATION/RMW_IMPLEMENTATION=$FASTRTPS_DDS/g" ~/.ros2config && ros2configSource
+            sed -i "s/RMW_IMPLEMENTATION=$RMW_IMPLEMENTATION/RMW_IMPLEMENTATION=$FASTRTPS_DDS/g" ~/.ros2rc && ros2rcSource
             echo "DDS implementation set to $FASTRTPS_DDS";;
         -h|--help)
             echo "Usage: ros2dds [-c|--cyclone] [-f|--fastrtps]"
@@ -92,9 +92,9 @@ function ros2dds() {
 
 function ros2help() {
     echo "Available commands:"
-    echo "  ros2configNano:   to edit the configuration file with nano"
-    echo "  ros2configGedit:  to edit the configuration file with gedit"
-    echo "  ros2configSource: to source ~/.ros2config"
+    echo "  ros2rcNano:   to edit the configuration file with nano"
+    echo "  ros2rcGedit:  to edit the configuration file with gedit"
+    echo "  ros2rcSource: to source ~/.ros2rc"
     echo "  ros2build:        to build the workspace"
     echo "  ros2source:       to source /opt/ros/$ROS_DISTRO/setup.$CURRENT_SHELL and ~/ros2_ws/install/local_setup.$CURRENT_SHELL"
     echo "  ros2sourceGlobal: to source /opt/ros/$ROS_DISTRO/setup.$CURRENT_SHELL"
@@ -107,9 +107,9 @@ function ros2help() {
 
 
 #| ALIASES |#
-alias ros2configNano="nano ~/.ros2config"
-alias ros2configGedit="gedit ~/.ros2config"
-alias ros2configSource="source ~/.ros2config"
+alias ros2rcNano="nano ~/.ros2rc"
+alias ros2rcGedit="gedit ~/.ros2rc"
+alias ros2rcSource="source ~/.ros2rc"
 
 alias foxgloveBridge="ros2 launch foxglove_bridge foxglove_bridge_launch.xml send_buffer_limit:=300000000"
 alias ros2build="ros2build"
