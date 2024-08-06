@@ -15,9 +15,10 @@ function ros2build() {
             echo "  -s|--seq:  to build one package at time (sequentially)"
             echo "  -j|--jobs: to specify the number of core used to build"
             echo "  -p|--pkg:  to specify which package to build"
-            echo "Only one flag can be used.\n";;
+            echo "Only one flag can be used.";;
         *) colcon build --symlink-install;;
     esac
+
     cd $CURRENT_DIR
 }
 
@@ -56,7 +57,7 @@ function ros2clean() {
 function ros2domain() {
     case $1 in
         -p|--perm) 
-            sed -i "s/ROS_DOMAIN_ID=$ROS_DOMAIN_ID/ROS_DOMAIN_ID=$2/g" ~/.ros2config && sourceRos2config
+            sed -i "s/ROS_DOMAIN_ID=$ROS_DOMAIN_ID/ROS_DOMAIN_ID=$2/g" ~/.ros2config && ros2configSource
             echo "ROS_DOMAIN_ID permanently set to $2";;
         -t|--temp) 
             export ROS_DOMAIN_ID=$2
@@ -65,7 +66,7 @@ function ros2domain() {
             echo "Usage: ros2domain [-p <num>|--perm <num>] [-t <num>|--temp <num>]"
             echo "  -p|--perm: to set the domain id permanently"
             echo "  -t|--temp: to set the domain id temporarily"
-            echo "Only one flag can be used.\n";;
+            echo "Only one flag can be used.";;
         *) echo "ROS_DOMAIN_ID=$ROS_DOMAIN_ID";;
     esac
 }
@@ -75,16 +76,16 @@ function ros2dds() {
     CYCLONE_DDS="rmw_cyclonedds_cpp"
     case $1 in
         -c|--cyclone) 
-            sed -i "s/RMW_IMPLEMENTATION=$RMW_IMPLEMENTATION/RMW_IMPLEMENTATION=$CYCLONE_DDS/g" ~/.ros2config && sourceRos2config
+            sed -i "s/RMW_IMPLEMENTATION=$RMW_IMPLEMENTATION/RMW_IMPLEMENTATION=$CYCLONE_DDS/g" ~/.ros2config && ros2configSource
             echo "DDS implementation set to $CYCLONE_DDS";;
         -f|--fastrtps) 
-            sed -i "s/RMW_IMPLEMENTATION=$RMW_IMPLEMENTATION/RMW_IMPLEMENTATION=$FASTRTPS_DDS/g" ~/.ros2config && sourceRos2config
+            sed -i "s/RMW_IMPLEMENTATION=$RMW_IMPLEMENTATION/RMW_IMPLEMENTATION=$FASTRTPS_DDS/g" ~/.ros2config && ros2configSource
             echo "DDS implementation set to $FASTRTPS_DDS";;
         -h|--help)
             echo "Usage: ros2dds [-c|--cyclone] [-f|--fastrtps]"
             echo "  -c|--cyclone: to set the DDS implementation to Cyclone DDS"
             echo "  -f|--fastrtps: to set the DDS implementation to FastRTPS DDS"
-            echo "Only one flag can be used.\n";;
+            echo "Only one flag can be used.";;
         *) echo "DDS implementation: $RMW_IMPLEMENTATION";;
     esac
 }
