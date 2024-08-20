@@ -8,7 +8,7 @@ source $ROS_WORKSPACE/install/local_setup.$CURRENT_SHELL
 
 #| Enable Multicast on LoopBack interface |#
 if [ $USER_NAME = "jetson" ]; then
-    sudo ip l set lo multicast on && echo "jetson" | sudo -S ls
+    echo "jetson" | sudo -S ip l set lo multicast on
     echo "Enabled multicast on loopback interface"
 fi
 
