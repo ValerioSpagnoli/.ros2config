@@ -2,7 +2,7 @@ CURRENT_SHELL=$(basename $SHELL)
 USER_NAME=$(whoami)
 ROS_WORKSPACE=~/ros2_ws
 
-source /opt/ros/humble/setup.$CURRENT_SHELL
+source /opt/ros/iron/setup.$CURRENT_SHELL
 source $ROS_WORKSPACE/install/local_setup.$CURRENT_SHELL
 
 
@@ -93,14 +93,27 @@ function ros2clean() {
     CURRENT_DIR=$(pwd)
 
     cd $ROS_WORKSPACE
-    rm -rf build install log
-    export AMENT_PREFIX_PATH=''
-    export CMAKE_PREFIX_PATH=''
-    export COLCON_PREFIX_PATH=''
-
+    case $1 in
+        -a|--all) 
+            rm -rf $ROS_WORKSPACE/build $ROS_WORKSPACE/install $ROS_WORKSPACE/log
+            export AMENT_PREFIX_PATH=''
+            export CMAKE_PREFIX_PATH=''
+            export COLCON_PREFIX_PATH=''
+            echo "Workspace cleaned";;
+        -p|--pkg) 
+            rm -rf $ROS_WORKSPACE/build/$2 $ROS_WORKSPACE/install/$2 $ROS_WORKSPACE/log/$2
+            export AMENT_PREFIX_PATH=$(echo $AMENT_PREFIX_PATH | sed "s|$ROS_WORKSPACE/install/$2:||g")
+            echo "Package $2 cleaned";;
+        -h|--help)
+            echo "Usage: ros2clean [-p <pkg>|--pkg <pkg>]"
+            echo "  -a|--all: to clean the entire workspace"
+            echo "  -p|--pkg: to clean a specific package"
+            echo "Only one flag can be used.";;
+        *)
+    esac
     cd $CURRENT_DIR
 
-    ros2sourceGlobal
+    ros2source
 }
 
 function ros2domain() {
