@@ -42,8 +42,8 @@ alias zedDiagnostic="./usr/local/zed/tools/ZED_Diagnostic"
 export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
 export CYCLONEDDS_URI=$ROS_WORKSPACE/dds_config/cyclone_dds_config.xml
 export FASTRTPS_DEFAULT_PROFILES_FILE=$ROS_WORKSPACE/dds_config/fast_rtps_dds_config.xml
-export ROS_DOMAIN_ID=150
-export ROS_LOCALHOST_ONLY=0
+export ROS_DOMAIN_ID=15
+export ROS_LOCALHOST_ONLY=1
 export MAKEFLAGS=-j$(nproc)
 
 
