@@ -1,13 +1,16 @@
-CURRENT_SHELL=$(basename $SHELL)
-USER_NAME=$(whoami)
-ROS_WORKSPACE=~/ros2_ws
-
 source /opt/ros/$(ls /opt/ros/)/setup.$CURRENT_SHELL
 source $ROS_WORKSPACE/install/local_setup.$CURRENT_SHELL
 
+CURRENT_SHELL=$(basename $SHELL)
+USER_NAME=$(whoami)
+ROS_WORKSPACE=~/ros2_ws
+LO_MULTICAST=0
+if [ $(ip l show lo | grep MULTICAST) ]; then
+    LO_MULTICAST=1
+fi
 
 #| Enable Multicast on LoopBack interface |#
-if [ $USER_NAME = "jetson" ]; then
+if [ $USER_NAME = "jetson" && $LO_MULTICAST = 0 ]; then
     echo "jetson" | sudo -S ip l set lo multicast on
     echo "Enabled multicast on loopback interface"
 fi
