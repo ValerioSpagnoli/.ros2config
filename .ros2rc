@@ -5,12 +5,13 @@ CURRENT_SHELL=$(basename $SHELL)
 USER_NAME=$(whoami)
 ROS_WORKSPACE=~/ros2_ws
 LO_MULTICAST=0
-if [ $(ip l show lo | grep MULTICAST) ]; then
+
+if [[ $(ip l show lo | grep MULTICAST) ]]; then
     LO_MULTICAST=1
 fi
 
 #| Enable Multicast on LoopBack interface |#
-if [ $USER_NAME = "jetson" && $LO_MULTICAST = 0 ]; then
+if [[ $USER_NAME = "jetson" && $LO_MULTICAST = 0 ]]; then
     echo "jetson" | sudo -S ip l set lo multicast on
     echo "Enabled multicast on loopback interface"
 fi
@@ -42,7 +43,7 @@ alias zedDiagnostic="./usr/local/zed/tools/ZED_Diagnostic"
 
 
 #| Environment variables |#
-export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 export CYCLONEDDS_URI=$ROS_WORKSPACE/dds_config/cyclone_dds_config.xml
 export FASTRTPS_DEFAULT_PROFILES_FILE=$ROS_WORKSPACE/dds_config/fast_rtps_dds_config.xml
 export ROS_DOMAIN_ID=15
