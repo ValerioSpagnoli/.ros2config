@@ -1,11 +1,7 @@
-source /opt/ros/$(ls /opt/ros/)/setup.$CURRENT_SHELL
-source $ROS_WORKSPACE/install/local_setup.$CURRENT_SHELL
-
 CURRENT_SHELL=$(basename $SHELL)
 USER_NAME=$(whoami)
 ROS_WORKSPACE=~/ros2_ws
 LO_MULTICAST=0
-
 if [[ $(ip l show lo | grep MULTICAST) ]]; then
     LO_MULTICAST=1
 fi
@@ -16,6 +12,8 @@ if [[ $USER_NAME = "jetson" && $LO_MULTICAST = 0 ]]; then
     echo "Enabled multicast on loopback interface"
 fi
 
+source /opt/ros/$(ls /opt/ros/)/setup.$CURRENT_SHELL
+source $ROS_WORKSPACE/install/local_setup.$CURRENT_SHELL
 
 #| Aliases |#
 alias ros2rcNano="nano ~/.ros2config/.ros2rc"
