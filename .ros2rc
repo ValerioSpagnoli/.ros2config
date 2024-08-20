@@ -1,12 +1,25 @@
 CURRENT_SHELL=$(basename $SHELL)
-source /opt/ros/iron/setup.$CURRENT_SHELL
+USER_NAME=$(whoami)
+ROS_WORKSPACE=~/ros2_ws
 
-#| ALIASES |#
+source /opt/ros/humble/setup.$CURRENT_SHELL
+source $ROS_WORKSPACE/install/local_setup.$CURRENT_SHELL
+
+
+#| Enable Multicast on LoopBack interface |#
+if [ $USER_NAME = "jetson" ]; then
+    sudo ip l set lo multicast on && echo "jetson" | sudo -S ls
+    echo "Enabled multicast on loopback interface"
+fi
+
+
+#| Aliases |#
 alias ros2rcNano="nano ~/.ros2config/.ros2rc"
 alias ros2rcGedit="gedit ~/.ros2config/.ros2rc"
 alias ros2rcSource="source ~/.ros2config/.ros2rc"
+alias ros2help="ros2help"
+alias ros2conf="ros2conf"
 
-alias foxgloveBridge="ros2 launch foxglove_bridge foxglove_bridge_launch.xml send_buffer_limit:=300000000"
 alias ros2build="ros2build"
 alias ros2source="ros2source"
 alias ros2sourceGlobal="ros2sourceGlobal"
@@ -14,23 +27,37 @@ alias ros2sourceLocal="ros2sourceLocal"
 alias ros2clean="ros2clean"
 alias ros2domain="ros2domain"
 alias ros2dds="ros2dds"
-alias ros2help="ros2help"
+alias ros2lh="ros2lh"
+alias uros="uros"
 
-#| ENVIRONMENT VARIABLES |#
-export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-export CYCLONEDDS_URI=~/ros2_ws/dds_config/cyclone_dds_config.xml
-export FASTRTPS_DEFAULT_PROFILES_FILE=~/ros2_ws/dds_config/fast_rtps_dds_config.xml
-export ROS_DOMAIN_ID=100
+alias foxgloveBridge="ros2 launch foxglove_bridge foxglove_bridge_launch.xml send_buffer_limit:=300000000"
+alias teleop="ros2 run teleop_twist_keyboard teleop_twist_keyboard"
+alias tf2="tf2" 
+
+alias zedTools="cd /usr/local/zed/tools"
+alias zedDiagnostic="./usr/local/zed/tools/ZED_Diagnostic"
+
+
+#| Environment variables |#
+export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+export CYCLONEDDS_URI=$ROS_WORKSPACE/dds_config/cyclone_dds_config.xml
+export FASTRTPS_DEFAULT_PROFILES_FILE=$ROS_WORKSPACE/dds_config/fast_rtps_dds_config.xml
+export ROS_DOMAIN_ID=150
 export ROS_LOCALHOST_ONLY=0
+export MAKEFLAGS=-j$(nproc)
 
-#| FUNCTIONS |#
+
+#| Functions |#
 function ros2build() {
     CURRENT_DIR=$(pwd)
 
-    cd ~/ros2_ws
+    cd $ROS_WORKSPACE
     case $1 in
         -s|--seq) colcon build --symlink-install --executor sequential && source install/local_setup.$CURRENT_SHELL;;
-        -j|--jobs) colcon build --symlink-install --parallel-workers $2 && source install/local_setup.$CURRENT_SHELL;;
+        -w|--workers) colcon build --symlink-install --parallel-workers $2 && source install/local_setup.$CURRENT_SHELL;;
+        -j|--jobs) 
+            export MAKEFLAGS=-j$2 && echo "Building with $MAKEFLAGS." &&
+            colcon build --symlink-install && source install/local_setup.$CURRENT_SHELL;;
         -p|--pkg) colcon build --symlink-install --packages-select $2 && source install/local_setup.$CURRENT_SHELL;;
         -h|--help) 
             echo "Usage: ros2build [-s|--seq] [-j <num>|--jobs <num>] [-p <pkg>|--pkg <pkg>]"
@@ -51,7 +78,7 @@ function ros2sourceGlobal() {
 function ros2sourceLocal() {
     CURRENT_DIR=$(pwd)
 
-    cd ~/ros2_ws
+    cd $ROS_WORKSPACE
     source install/local_setup.$CURRENT_SHELL
     
     cd $CURRENT_DIR
@@ -65,7 +92,7 @@ function ros2source(){
 function ros2clean() {
     CURRENT_DIR=$(pwd)
 
-    cd ~/ros2_ws
+    cd $ROS_WORKSPACE
     rm -rf build install log
     export AMENT_PREFIX_PATH=''
     export CMAKE_PREFIX_PATH=''
@@ -112,17 +139,102 @@ function ros2dds() {
     esac
 }
 
+function ros2lh(){
+    ROS_LOCALHOST_ONLY_ENABLED=1
+    ROS_LOCALHOST_ONLY_DISABLED=0
+    case $1 in
+        -e|--enable) 
+            sed -i "s/ROS_LOCALHOST_ONLY=$ROS_LOCALHOST_ONLY/ROS_LOCALHOST_ONLY=$ROS_LOCALHOST_ONLY_ENABLED/g" ~/.ros2config/.ros2rc && ros2rcSource
+            echo "ROS_LOCALHOST_ONLY enabled";;
+        -d|--disable) 
+            sed -i "s/ROS_LOCALHOST_ONLY=$ROS_LOCALHOST_ONLY/ROS_LOCALHOST_ONLY=$ROS_LOCALHOST_ONLY_ENABLED/g" ~/.ros2config/.ros2rc && ros2rcSource
+            echo "ROS_LOCALHOST_ONLY disabled";;
+        -h|--help) 
+            echo "Usage: ros2lh [-e|--enable] [-d|--disable]"
+            echo "  -e|--enable: to enable the ROS_LOCALHOST_ONLY"
+            echo "  -d|--disable: to disable the ROS_LOCALHOST_ONLY"
+            echo "Only one flag can be used.";;
+        *) echo "ROS_LOCALHOST_ONLY: $ROS_LOCALHOST_ONLY";;
+    esac
+}
+
+function uros(){
+    COMMUNICATION=""
+    case $1 in
+        -s|--serial) COMMUNICATION="serial" ;;
+        -w|--wifi) COMMUNICATION="wifi" ;;
+        -h|--help) 
+            echo "Usage: uros [-s|--serial] [-w|--wifi] [port]"
+            echo "  -s|--serial: to use serial communication"
+            echo "  -w|--wifi: to use wifi communication"
+            echo "  port (optional): to specify the port (default: 8888 (wifi), /dev/ttyUSB0 (serial))"
+            echo "Only one flag can be used.";;
+        *);;
+    esac
+
+    SERIAL_PORT="/dev/ttyUSB0"
+    WIFI_PORT="8888"
+    if [ $2 ]; then
+        case $COMMUNICATION in
+            serial) SERIAL_PORT=$2;;
+            wifi) WIFI_PORT=$2;;
+            *)
+        esac
+    fi
+
+    case $COMMUNICATION in
+        serial) 
+            echo "Running micro_ros_agent with serial communication on $SERIAL_PORT"
+            ros2 run micro_ros_agent micro_ros_agent serial --dev $SERIAL_PORT;;
+        wifi) 
+            echo "Running micro_ros_agent with wifi communication on port $WIFI_PORT"
+            ros2 run micro_ros_agent micro_ros_agent udp4 --port $WIFI_PORT;;
+        *)
+    esac
+}
+
+function tf2(){
+    TIME=2
+    if [ $1 = "-t" ]; then
+        TIME=$2
+    fi
+
+    echo "Generating tf2 frames:"
+    echo "  - Time: $TIME"
+    echo "  - Output: $ROS_WORKSPACE/frames.pdf"
+
+    ros2 run tf2_tools view_frames -t $TIME -o $ROS_WORKSPACE/frames
+    evince $ROS_WORKSPACE/frames.pdf
+}
+
+function ros2conf() {
+    echo "USER_NAME          = $USER_NAME"
+    echo "SHELL              = $CURRENT_SHELL"
+    echo "ROS_DISTRO         = $ROS_DISTRO"
+    echo "ROS_DOMAIN_ID      = $ROS_DOMAIN_ID"
+    echo "DDS                = $RMW_IMPLEMENTATION"
+    echo "ROS_LOCALHOST_ONLY = $ROS_LOCALHOST_ONLY"
+}
+
 function ros2help() {
     echo "Available commands:"
-    echo "  ros2rcNano:   to edit the configuration file with nano"
-    echo "  ros2rcGedit:  to edit the configuration file with gedit"
-    echo "  ros2rcSource: to source ~/.ros2config/.ros2rc"
-    echo "  ros2build:        to build the workspace"
-    echo "  ros2source:       to source /opt/ros/$ROS_DISTRO/setup.$CURRENT_SHELL and ~/ros2_ws/install/local_setup.$CURRENT_SHELL"
-    echo "  ros2sourceGlobal: to source /opt/ros/$ROS_DISTRO/setup.$CURRENT_SHELL"
-    echo "  ros2sourceLocal : to source ~/ros2_ws/install/local_setup.$CURRENT_SHELL" 
-    echo "  ros2clean:        to clean the workspace"
-    echo "  ros2domain:       to set the domain id"
-    echo "  ros2dds:          to set the DDS implementation"
-    echo "  foxgloveBridge:   to launch the foxglove bridge"
+    echo "  ros2rcNano:           to edit the configuration file with nano"
+    echo "  ros2rcGedit:          to edit the configuration file with gedit"
+    echo "  ros2rcSource:         to source ~/.ros2config/.ros2rc"
+    echo "  ros2build:            to build the workspace"
+    echo "  ros2source:           to source /opt/ros/$ROS_DISTRO/setup.$CURRENT_SHELL and ~/ros2_ws/install/local_setup.$CURRENT_SHELL"
+    echo "  ros2sourceGlobal:     to source /opt/ros/$ROS_DISTRO/setup.$CURRENT_SHELL"
+    echo "  ros2sourceLocal :     to source ~/ros2_ws/install/local_setup.$CURRENT_SHELL" 
+    echo "  ros2clean:            to clean the workspace"
+    echo "  ros2domain:           to set the domain id"
+    echo "  ros2dds:              to set the DDS implementation"
+    echo "  ros2lh:               to enable/disable the ROS_LOCALHOST_ONLY"
+    echo "  uros:                 to run the micro_ros_agent"
+    echo "  foxgloveBridge:       to launch the foxglove bridge"
+    echo "  teleop:               to launch the teleop_twist_keyboard"
+    echo "  tf2:                  to generate the tf2 frames"
+    echo "  zedTools:             to go to the ZED tools directory"
+    echo "  zedDiagnostic:        to run the ZED diagnostic tool"
+    echo "  currentConfiguration: to show the current configuration"
+    echo "  ros2help:             to show this help"
 }
