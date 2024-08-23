@@ -37,8 +37,11 @@ alias teleop="ros2 run teleop_twist_keyboard teleop_twist_keyboard"
 alias tf2="tf2" 
 
 alias zedTools="cd /usr/local/zed/tools"
-alias zedDiagnostic="./usr/local/zed/tools/ZED_Diagnostic"
-
+if [ -z "$DISPLAY" ]; then
+  alias zedDiagnostic="/usr/local/zed/tools/ZED_Diagnostic -c"
+else
+  alias zedDiagnostic="/usr/local/zed/tools/ZED_Diagnostic"
+fi
 
 #| Environment variables |#
 export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
@@ -236,10 +239,10 @@ function ros2help() {
     echo "  ros2rcNano:           to edit the configuration file with nano"
     echo "  ros2rcGedit:          to edit the configuration file with gedit"
     echo "  ros2rcSource:         to source ~/.ros2config/.ros2rc"
-    echo "  ros2build:            to build the workspace"
     echo "  ros2source:           to source /opt/ros/$ROS_DISTRO/setup.$CURRENT_SHELL and ~/ros2_ws/install/local_setup.$CURRENT_SHELL"
     echo "  ros2sourceGlobal:     to source /opt/ros/$ROS_DISTRO/setup.$CURRENT_SHELL"
     echo "  ros2sourceLocal :     to source ~/ros2_ws/install/local_setup.$CURRENT_SHELL" 
+    echo "  ros2build:            to build the workspace"
     echo "  ros2clean:            to clean the workspace"
     echo "  ros2domain:           to set the domain id"
     echo "  ros2dds:              to set the DDS implementation"
@@ -250,6 +253,6 @@ function ros2help() {
     echo "  tf2:                  to generate the tf2 frames"
     echo "  zedTools:             to go to the ZED tools directory"
     echo "  zedDiagnostic:        to run the ZED diagnostic tool"
-    echo "  currentConfiguration: to show the current configuration"
+    echo "  ros2conf:             to show the current configuration"
     echo "  ros2help:             to show this help"
 }
