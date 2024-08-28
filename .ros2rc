@@ -55,26 +55,93 @@ export MAKEFLAGS=-j$(nproc)
 #| Functions |#
 function ros2build() {
     CURRENT_DIR=$(pwd)
-
     cd $ROS_WORKSPACE
-    case $1 in
-        -s|--seq) colcon build --symlink-install --executor sequential && source install/local_setup.$CURRENT_SHELL;;
-        -w|--workers) colcon build --symlink-install --parallel-workers $2 && source install/local_setup.$CURRENT_SHELL;;
-        -j|--jobs) 
-            export MAKEFLAGS=-j$2 && echo "Building with $MAKEFLAGS." &&
-            colcon build --symlink-install && source install/local_setup.$CURRENT_SHELL;;
-        -p|--pkg) colcon build --symlink-install --packages-select $2 && source install/local_setup.$CURRENT_SHELL;;
-        -h|--help) 
-            echo "Usage: ros2build [-s|--seq] [-j <num>|--jobs <num>] [-p <pkg>|--pkg <pkg>]"
-            echo "  -s|--seq:  to build one package at time (sequentially)"
-            echo "  -j|--jobs: to specify the number of core used to build"
-            echo "  -p|--pkg:  to specify which package to build"
-            echo "Only one flag can be used.";;
-        *) colcon build --symlink-install;;
-    esac
+
+    # Default values
+    SEQUENTIAL=false
+    PARALLEL_WORKERS=""
+    JOBS=""
+    PACKAGES=()
+    RELEASE=true
+
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -s|--seq)
+                SEQUENTIAL=true
+                shift
+                ;;
+            -w|--workers)
+                PARALLEL_WORKERS="$2"
+                shift 2
+                ;;
+            -j|--jobs)
+                JOBS="$2"
+                shift 2
+                ;;
+            -p|--pkg)
+                IFS=',' read -ra PKG_ARRAY <<< "$2"
+                PACKAGES+=("${PKG_ARRAY[@]}")
+                shift 2
+                ;;
+            -r|--release)
+                if [ "$2" = "0" ]; then
+                    RELEASE=false
+                fi
+                shift 2
+                ;;
+            -h|--help)
+                echo "Usage: ros2build [-s|--seq] [-w <num>|--workers <num>] [-j <num>|--jobs <num>] [-p <pkg1,pkg2,...>|--pkg <pkg1,pkg2,...>] [-r <0|1>|--release <0|1>]"
+                echo " -s|--seq: to build one package at time (sequentially)"
+                echo " -w|--workers: to specify the number of workers for parallel build"
+                echo " -j|--jobs: to specify the number of jobs (cores) used to build"
+                echo " -p|--pkg: to specify which package(s) to build (comma-separated for multiple)"
+                echo " -r|--release: set to 0 to disable Release build type (enabled by default)"
+                echo "Flags can be used in combination."
+                cd $CURRENT_DIR
+                return
+                ;;
+            *)
+                echo "Unknown option: $1"
+                cd $CURRENT_DIR
+                return 1
+                ;;
+        esac
+    done
+
+    # Construct build command
+    BUILD_CMD="colcon build --symlink-install"
+    
+    if [ "$SEQUENTIAL" = true ]; then
+        BUILD_CMD+=" --executor sequential"
+    fi
+    
+    if [ -n "$PARALLEL_WORKERS" ]; then
+        BUILD_CMD+=" --parallel-workers $PARALLEL_WORKERS"
+    fi
+    
+    if [ -n "$JOBS" ]; then
+        export MAKEFLAGS=-j$JOBS
+        echo "Building with $MAKEFLAGS."
+    fi
+    
+    if [ ${#PACKAGES[@]} -gt 0 ]; then
+        BUILD_CMD+=" --packages-select ${PACKAGES[*]}"
+    fi
+
+    if [ "$RELEASE" = true ]; then
+        BUILD_CMD+=" --cmake-args -DCMAKE_BUILD_TYPE=Release"
+    fi
+
+    # Execute build command
+    eval $BUILD_CMD
+
+    # Source the setup file
+    source install/local_setup.$CURRENT_SHELL
 
     cd $CURRENT_DIR
 }
+
 
 function ros2sourceGlobal() {
     source /opt/ros/$ROS_DISTRO/setup.$CURRENT_SHELL
