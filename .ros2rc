@@ -240,7 +240,7 @@ function ros2lh(){
             sed -i "s/ROS_LOCALHOST_ONLY=$ROS_LOCALHOST_ONLY/ROS_LOCALHOST_ONLY=$ROS_LOCALHOST_ONLY_ENABLED/g" ~/.ros2config/.ros2rc && ros2rcSource
             echo "ROS_LOCALHOST_ONLY enabled";;
         -d|--disable) 
-            sed -i "s/ROS_LOCALHOST_ONLY=$ROS_LOCALHOST_ONLY/ROS_LOCALHOST_ONLY=$ROS_LOCALHOST_ONLY_ENABLED/g" ~/.ros2config/.ros2rc && ros2rcSource
+            sed -i "s/ROS_LOCALHOST_ONLY=$ROS_LOCALHOST_ONLY/ROS_LOCALHOST_ONLY=$ROS_LOCALHOST_ONLY_DISABLED/g" ~/.ros2config/.ros2rc && ros2rcSource
             echo "ROS_LOCALHOST_ONLY disabled";;
         -h|--help) 
             echo "Usage: ros2lh [-e|--enable] [-d|--disable]"
