@@ -44,12 +44,18 @@ else
 fi
 
 #| Environment variables |#
-export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
 export CYCLONEDDS_URI=$ROS_WORKSPACE/dds_config/cyclone_dds_config.xml
 export FASTRTPS_DEFAULT_PROFILES_FILE=$ROS_WORKSPACE/dds_config/fast_rtps_dds_config.xml
-export ROS_DOMAIN_ID=4
-export ROS_LOCALHOST_ONLY=1
+export ROS_DOMAIN_ID=20
+export ROS_DOMAIN_ID_JETSON=4
+export ROS_DOMAIN_ID_UROS=5
+export ROS_LOCALHOST_ONLY=0
 export MAKEFLAGS=-j$(nproc)
+
+if [[ $USER_NAME = "jetson"]]; then
+    sed -i "s/ROS_DOMAIN_ID=20/ROS_DOMAIN_ID=$ROS_DOMAIN_ID_JETSON/g" ~/.ros2config/.ros2rc && ros2rcSource
+fi
 
 
 #| Functions |#
@@ -257,6 +263,7 @@ function uros(){
     SERIAL_PORT="/dev/ttyUSB0"
     WIFI_PORT="8888"
     FASTDDS="rmw_fastrtps_cpp"
+    sed -i "s/ROS_DOMAIN_ID=20/ROS_DOMAIN_ID=$ROS_DOMAIN_ID_UROS/g" ~/.ros2config/.ros2rc && ros2rcSource
 
     # Parse flags
     while [[ $# -gt 0 ]]; do
