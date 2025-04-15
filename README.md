@@ -1,7 +1,5 @@
 # ROS 2 Run Commands - `ros2rc`
 
-## Introduction
-
 This repository contains a shell script (`ros2rc`) designed to simplify and streamline common ROS 2 development tasks. It provides a set of convenient aliases and functions for building workspaces, managing ROS 2 environment sourcing, cleaning build artifacts, configuring DDS settings, setting the ROS_DOMAIN_ID, and more.
 
 
