@@ -1,7 +1,6 @@
 CURRENT_SHELL=$(basename $SHELL)
 USER_NAME=$(whoami)
 ROS_WS=~/ros2_ws
-UROS_WS=~/uros_ws
 
 #| Enable Multicast on LoopBack interface |#
 LO_MULTICAST=0
@@ -14,13 +13,11 @@ source /opt/ros/$(ls /opt/ros/)/setup.$CURRENT_SHELL
 if [ -d $ROS_WS/install ]; then
     source $ROS_WS/install/local_setup.$CURRENT_SHELL
 fi
-if [ -d $UROS_WS/install ]; then
-    source $UROS_WS/install/local_setup.$CURRENT_SHELL
-fi
 
 #| Aliases |#
 alias ros2rcNano="nano ~/.ros2config/ros2rc"
 alias ros2rcGedit="gedit ~/.ros2config/ros2rc"
+alias ros2rcCode="code ~/.ros2config/ros2rc"
 alias ros2rcSource="source ~/.ros2config/ros2rc"
 alias ros2help="ros2help"
 alias ros2conf="ros2conf"
@@ -33,37 +30,21 @@ alias ros2clean="ros2clean"
 alias ros2domain="ros2domain"
 alias ros2dds="ros2dds"
 alias ros2lh="ros2lh"
-alias uros="uros"
-alias ros2zenoh="ros2zenoh"
 
 alias foxglove-bridge="ros2 launch foxglove_bridge foxglove_bridge_launch.xml send_buffer_limit:=300000000"
 alias teleop="ros2 run teleop_twist_keyboard teleop_twist_keyboard"
 alias tf2="tf2" 
 
-alias zedTools="cd /usr/local/zed/tools"
-if [ -z "$DISPLAY" ]; then
-  alias zedDiagnostic="/usr/local/zed/tools/ZED_Diagnostic -c"
-else
-  alias zedDiagnostic="/usr/local/zed/tools/ZED_Diagnostic"
-fi
-
 #| Environment variables |#
 export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-export ZENOH_UROS_CONFIG=$ROS_WS/dds_config/zenoh_uros_config.json5
 export CYCLONEDDS_URI=$ROS_WS/dds_config/cyclone_dds_config.xml
 export FASTRTPS_DEFAULT_PROFILES_FILE=$ROS_WS/dds_config/fast_rtps_dds_config.xml
 export ROS_DOMAIN_ID=1
-export ROS_DOMAIN_ID_JETSON=4
-export ROS_DOMAIN_ID_UROS=5
 export ROS_LOCALHOST_ONLY=0
 export MAKEFLAGS=-j$(nproc)
 FAST_DDS="rmw_fastrtps_cpp"
 CYCLONE_DDS="rmw_cyclonedds_cpp"
 ZENOH_DDS="rmw_zenoh_cpp"
-
-if [[ $USER_NAME = "jetson" && $ROS_DOMAIN_ID != $ROS_DOMAIN_ID_JETSON ]]; then
-    sed -i "s/ROS_DOMAIN_ID=$ROS_DOMAIN_ID/ROS_DOMAIN_ID=$ROS_DOMAIN_ID_JETSON/g" ~/.ros2config/ros2rc && ros2rcSource
-fi
 
 #| Functions |#
 function ros2build() {
@@ -170,14 +151,6 @@ function ros2build() {
     cd $CURRENT_DIR
 }
 
-function urosbuild() {
-    current_dir=$(pwd)
-    cd $UROS_WS
-    colcon build --symlink-install
-    source install/local_setup.$CURRENT_SHELL
-    cd $current_dir
-}
-
 function ros2sourceGlobal() {
     source /opt/ros/$ROS_DISTRO/setup.$CURRENT_SHELL
 }
@@ -189,10 +162,6 @@ function ros2sourceLocal() {
 function ros2source(){
     ros2sourceGlobal
     ros2sourceLocal
-}
-
-function urosSource(){
-    source $UROS_WS/install/local_setup.$CURRENT_SHELL
 }
 
 function ros2clean() {
@@ -299,63 +268,6 @@ function ros2lh(){
     esac
 }
 
-function uros(){
-    COMMUNICATION=""
-    VARIABLES=""
-    SERIAL_PORT="/dev/ttyUSB0"
-    WIFI_PORT="8888"
-
-    # Parse flags
-    while [[ $# -gt 0 ]]; do
-        case $1 in
-            -s|--serial)
-                COMMUNICATION="serial"
-                ;;
-            -w|--wifi)
-                COMMUNICATION="wifi"
-                ;;
-            -l|--localhost)
-                VARIABLES="ROS_LOCALHOST_ONLY=0 RMW_IMPLEMENTATION=$FAST_DDS ROS_DOMAIN_ID=$ROS_DOMAIN_ID_UROS"
-                ;;
-            -h|--help)
-                echo "Usage: uros [-s|--serial] [-w|--wifi] [-l|--localhost] [port]"
-                echo " -s|--serial: to use serial communication"
-                echo " -w|--wifi: to use wifi communication"
-                echo " -l|--localhost: use microros with localhost, will use fastRTPS and localhost only"
-                echo " port (optional): to specify the port (default: 8888 (wifi), /dev/ttyUSB0 (serial))"
-                echo "You can combine the -l flag with either -s or -w."
-                return
-                ;;
-            *)
-                # Capture the port number if provided
-                if [[ -n $COMMUNICATION ]]; then
-                    if [[ $COMMUNICATION == "serial" ]]; then
-                        SERIAL_PORT=$1
-                    elif [[ $COMMUNICATION == "wifi" ]]; then
-                        WIFI_PORT=$1
-                    fi
-                fi
-                ;;
-        esac
-        shift
-    done
-
-    # Run micro_ros_agent based on the selected communication method
-    case $COMMUNICATION in
-        serial)
-            echo "Running micro_ros_agent with serial communication on $SERIAL_PORT with ROS_DOMAIN_ID=$ROS_DOMAIN_ID_UROS"
-            eval "$VARIABLES ros2 run micro_ros_agent micro_ros_agent serial --dev $SERIAL_PORT"
-            ;;
-        wifi)
-            echo "Running micro_ros_agent with wifi communication on port $WIFI_PORT with ROS_DOMAIN_ID=$ROS_DOMAIN_ID_UROS"
-            eval "$VARIABLES ros2 run micro_ros_agent micro_ros_agent udp4 --port $WIFI_PORT"
-            ;;
-        *)
-            echo "Error: No valid communication method selected. Use -h for help."
-            ;;
-    esac
-}
-
 function tf2(){
     TIME=2
     if [ $1 = "-t" ]; then
@@ -368,22 +280,6 @@ function tf2(){
 
     ros2 run tf2_tools view_frames -t $TIME -o $ROS_WS/frames
     evince $ROS_WS/frames.pdf
-}
-
-function ros2zenoh(){
-    #if nothing specified: zenoh-bridge-ros2dds
-    #if --uros or -u: ROS_LOCALHOST_ONLY=0 RMW_IMPLEMENTATION=rmw_cyclonedds_cpp zenoh-bridge-ros2dds -e tcp/127.0.0.1:7447 -c $ZENOH_UROS_CONFIG
-
-    case $1 in
-        -u|--uros)
-            ROS_LOCALHOST_ONLY=0 RMW_IMPLEMENTATION=$FAST_DDS ROS_DOMAIN_ID=$ROS_DOMAIN_ID_UROS zenoh-bridge-ros2dds -e tcp/127.0.0.1:7447 -c $ZENOH_UROS_CONFIG ;;
-        -h|--help) 
-            echo "Usage: ros2zenoh [-u|--uros]"
-            echo "  -u|--uros: to run the zenoh-bridge-ros2dds with uROS"
-            echo "Only one flag can be used.";;
-        *) zenoh-bridge-ros2dds ;;
-    esac
-
 }
 
 function ros2hz() {
@@ -469,6 +365,50 @@ function ros2hz() {
     eval $cmd
 }
 
+function ros2rc() {
+
+    show_help() {
+        echo "Usage: ros2rc [options]"
+        echo
+        echo "Options:"
+        echo "  -h, --help           Show this help message and exit"
+        echo "  -s, --source         Source the ros2rc file"
+        echo "  -n, --nano           Edit the ros2rc file with nano"
+        echo "  -g, --gedit          Edit the ros2rc file with gedit"
+        echo "  -c, --code           Edit the ros2rc file with VSCode"
+        echo
+    }
+
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -h|--help)
+                show_help
+                return 0
+                ;;
+            -s|--source)
+                ros2rcSource
+                return 0
+                ;;
+            -n|--nano)
+                ros2rcNano
+                return 0
+                ;;
+            -g|--gedit)
+                ros2rcGedit
+                return 0
+                ;;
+            -c|--code) 
+                ros2rcCode
+                return 0
+                ;;
+            *)
+                echo "Unknown option: $1"
+                return 1
+                ;;
+        esac
+    done
+}
+
 function ros2conf() {
     echo "USER_NAME          = $USER_NAME"
     echo "SHELL              = $CURRENT_SHELL"
@@ -480,27 +420,19 @@ function ros2conf() {
 
 function ros2help() {
     echo "Available commands:"
-    echo "  ros2rcNano:           to edit the configuration file with nano"
-    echo "  ros2rcGedit:          to edit the configuration file with gedit"
-    echo "  ros2rcSource:         to source ~/.ros2config/ros2rc"
+    echo "  ros2rc:               to handle the ros2rc file"
     echo "  ros2source:           to source /opt/ros/$ROS_DISTRO/setup.$CURRENT_SHELL and ~/ros2_ws/install/local_setup.$CURRENT_SHELL"
     echo "  ros2sourceGlobal:     to source /opt/ros/$ROS_DISTRO/setup.$CURRENT_SHELL"
     echo "  ros2sourceLocal :     to source ~/ros2_ws/install/local_setup.$CURRENT_SHELL" 
-    echo "  urosSource:           to source ~/uros_ws/install/local_setup.$CURRENT_SHELL"
     echo "  ros2build:            to build the workspace"
-    echo "  urosbuild:            to build the micro-ROS workspace"
     echo "  ros2clean:            to clean the workspace"
     echo "  ros2domain:           to set the domain id"
     echo "  ros2dds:              to set the DDS implementation"
     echo "  ros2lh:               to enable/disable the ROS_LOCALHOST_ONLY and set loopback interface multicast"
-    echo "  uros:                 to run the micro_ros_agent"
     echo "  foxgloveBridge:       to launch the foxglove bridge"
     echo "  teleop:               to launch the teleop_twist_keyboard"
     echo "  tf2:                  to generate the tf2 frames"
-    echo "  zedTools:             to go to the ZED tools directory"
-    echo "  zedDiagnostic:        to run the ZED diagnostic tool"
     echo "  ros2conf:             to show the current configuration"
-    echo "  ros2zenoh:            to run the zenoh-bridge-ros2dds"
     echo "  ros2hz:               to run the topic bandwidth tool from StereoLabs"
     echo "  ros2help:             to show this help"
 }
